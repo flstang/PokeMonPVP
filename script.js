@@ -771,14 +771,14 @@ function renderAnalysis(defenses, team) {
     // Filter major threats (multiple weaknesses)
     const threats = Object.entries(defenses)
         .filter(([type, score]) => score >= 2)
-        .map(([type]) => type);
+        .map(([type, score]) => ({ type, score }));
 
     weaknessList.innerHTML = threats.length > 0 
         ? threats.map(t => `
             <div class="coverage-item">
                 <div class="threat-dot threat-high"></div>
-                <span class="type-badge" style="background: var(--type-${t});">${t}</span>
-                <span style="font-size: 0.8rem; color: var(--text-muted);">Major Threat! Entire team is vulnerable.</span>
+                <span class="type-badge" style="background: var(--type-${t.type});">${t.type}</span>
+                <span style="font-size: 0.8rem; color: var(--text-muted);">${t.score === team.length ? 'Major Threat! Entire team is vulnerable.' : 'Major Threat! Multiple members are vulnerable.'}</span>
             </div>
         `).join('')
         : '<p style="color: var(--success);">No major shared weaknesses. Balanced team!</p>';
@@ -825,7 +825,7 @@ function renderAnalysis(defenses, team) {
     // Core Tips
     let tips = "Based on your team, focus on ";
     if (threats.length > 0) {
-        tips += `swapping one member for a <b>${getCounterType(threats[0])}</b> type to cover your ${threats[0]} weakness. `;
+        tips += `swapping one member for a <b>${getCounterType(threats[0].type)}</b> type to cover your ${threats[0].type} weakness. `;
     } else {
         tips += "balanced play. Your team has solid defensive foundations. ";
     }
