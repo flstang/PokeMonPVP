@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PokePvP | Team Builder</title>
+    <meta name="description" content="Build balanced Pokemon Go PVP teams with advanced synergy analysis.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div id="app">
+        <aside>
+            <div class="brand">
+                <h1>PokePvP</h1>
+                <p style="color: var(--text-muted); font-size: 0.8rem;">Master League Builder</p>
+            </div>
+
+            <div class="search-container">
+                <input type="text" id="pokemon-search" placeholder="Search Pokemon..." autocomplete="off">
+                <div id="autocomplete-results" class="autocomplete-results"></div>
+            </div>
+
+            <div class="collection-header" style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                <h2 style="font-size: 1rem;">My Collection</h2>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span id="collection-count" style="font-size: 0.8rem; color: var(--text-muted); margin-right: 0.5rem;">0/50</span>
+                    <input type="file" id="csv-upload" accept=".csv" class="hidden">
+                    <button id="import-btn" title="Import Poke Genie/Calcy IV CSV" style="background: var(--glass); border: 1px solid var(--glass-border); color: var(--text-main); padding: 0.25rem 0.5rem; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 0.25rem; font-size: 0.75rem; transition: background 0.2s;">
+                        <i data-lucide="upload" style="width: 14px;"></i> Upload CSV
+                    </button>
+                </div>
+            </div>
+
+                <div id="collection-list" style="display: flex; flex-direction: column; gap: 0.5rem; overflow-y: auto; max-height: 200px; margin-bottom: 1.5rem;">
+                    <!-- Collection items will be injected here -->
+                </div>
+
+                <div class="saved-teams-header" style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                    <h2 style="font-size: 1rem;">Saved Teams</h2>
+                    <span id="teams-count" style="font-size: 0.8rem; color: var(--text-muted);">0</span>
+                </div>
+                <div id="saved-teams-list" style="display: flex; flex-direction: column; gap: 0.5rem; overflow-y: auto; max-height: 200px; margin-bottom: 1.5rem;">
+                    <!-- Saved teams will be injected here -->
+                </div>
+
+                <div class="type-legend">
+                <h3 style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem; border-top: 1px solid var(--glass-border); padding-top: 1rem;">Type Legend</h3>
+                <div class="legend-grid" id="legend-grid">
+                    <!-- Types will be injected here -->
+                </div>
+            </div>
+        </aside>
+
+        <main>
+            <header style="display: flex; align-items: flex-start; justify-content: space-between; gap: 2rem;">
+                <div style="flex-grow: 1;">
+                    <input type="text" id="team-name" placeholder="Enter Team Name..." style="background: transparent; border: none; border-bottom: 2px solid var(--glass-border); font-size: 1.5rem; font-weight: 700; color: white; width: 100%; outline: none; margin-bottom: 0.75rem; transition: border-color 0.3s;" value="My Battle Team">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <select id="league-select" style="background: var(--glass); border: 1px solid var(--glass-border); color: var(--text-muted); padding: 0.25rem 0.5rem; border-radius: 6px; outline: none; cursor: pointer; font-size: 0.85rem;">
+                            <option value="great">Great League (1500 CP)</option>
+                            <option value="ultra">Ultra League (2500 CP)</option>
+                            <option value="master" selected>Master League (No Limit)</option>
+                            <option value="special">Special / Theme Cup</option>
+                        </select>
+                        <p style="color: var(--text-muted); font-size: 0.85rem;">Analyze synergy for your core team</p>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button id="save-team" style="background: var(--accent); border: none; color: var(--bg-dark); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 700; transition: transform 0.2s;">Save Team</button>
+                    <button id="clear-team" class="hidden" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: var(--danger); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">Clear Team</button>
+                </div>
+            </header>
+
+            <div class="team-grid" id="team-grid">
+                <!-- 3 Team Slots -->
+                <div class="pokemon-card empty" data-slot="0">
+                    <i data-lucide="plus-circle"></i>
+                    <p>Slot 1</p>
+                </div>
+                <div class="pokemon-card empty" data-slot="1">
+                    <i data-lucide="plus-circle"></i>
+                    <p>Slot 2</p>
+                </div>
+                <div class="pokemon-card empty" data-slot="2">
+                    <i data-lucide="plus-circle"></i>
+                    <p>Slot 3</p>
+                </div>
+            </div>
+
+            <div class="analysis-section">
+                <h2 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i data-lucide="shield-check" style="color: var(--accent);"></i>
+                    Synergy Analysis
+                </h2>
+                
+                <div id="analysis-placeholder" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                    <p>Add 3 Pokemon to see a detailed synergy breakdown.</p>
+                </div>
+
+                <div id="analysis-content" class="analysis-grid hidden">
+                    <div class="synergy-card">
+                        <h3>Team Weaknesses</h3>
+                        <div id="weakness-list">
+                            <!-- Weaknesses will be injected here -->
+                        </div>
+                    </div>
+
+                    <div class="synergy-card">
+                        <h3>Coverage & Mitigation</h3>
+                        <div id="mitigation-list">
+                            <!-- Mitigation info will be injected here -->
+                        </div>
+                    </div>
+
+                    <div class="synergy-card" style="grid-column: span 2;">
+                        <h3>Strategic Core Tips</h3>
+                        <div id="core-tips" style="color: var(--text-main); line-height: 1.6;">
+                            <!-- AI Generated Tips -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Moveset Analysis Modal -->
+    <div id="moveset-modal" class="modal hidden">
+        <div class="modal-content">
+            <button id="close-modal" class="close-btn">&times;</button>
+            <h2 id="modal-pokemon-name" style="text-transform: capitalize; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                <img id="modal-pokemon-sprite" src="" style="width: 32px; height: 32px;" alt="">
+                <span>Pokemon Name</span>
+            </h2>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Select moves to analyze charging speed.</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div>
+                    <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">Fast Move</label>
+                    <select id="modal-fast-move" class="move-select" style="width: 100%;">
+                        <option value="">Loading...</option>
+                    </select>
+                    <div id="fast-move-stats" style="font-size: 0.75rem; color: var(--accent); margin-top: 0.25rem;"></div>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">Charge Move</label>
+                    <select id="modal-charge-move" class="move-select" style="width: 100%;">
+                        <option value="">Loading...</option>
+                    </select>
+                    <div id="charge-move-stats" style="font-size: 0.75rem; color: var(--accent); margin-top: 0.25rem;"></div>
+                </div>
+            </div>
+
+            <div id="charge-analysis" class="analysis-box" style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; padding: 1rem; text-align: center; margin-bottom: 1.5rem;">
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">Charging Speed</div>
+                <div id="charge-result" style="font-size: 1.25rem; font-weight: 700; color: white;">-</div>
+            </div>
+
+            <button id="save-moves-btn" style="width: 100%; background: var(--accent); border: none; color: var(--bg-dark); padding: 0.75rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">
+                Save Moves to Pokemon
+            </button>
+        </div>
+    </div>
+
+    <script src="fast_moves.js"></script>
+    <script src="script.js?v=3"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
