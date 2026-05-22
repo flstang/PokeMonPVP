@@ -255,6 +255,7 @@ const MOVE_ENERGY = {
 
 
 // Application State
+let pogoMovesCache = null;
 let state = {
     collection: JSON.parse(localStorage.getItem('pokemonCollection')) || [],
     team: [null, null, null],
@@ -499,6 +500,26 @@ async function addPokemonToCollection(name, silent = false, cp = null, fastMove 
         const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${name}`);
         if (!response.ok) return; // Skip if PokeAPI doesn't have it
         const data = await response.json();
+        
+        if (!fastMove || !chargeMove) {
+            if (!pogoMovesCache) {
+                const pogoRes = await fetch('https://pogoapi.net/api/v1/current_pokemon_moves.json');
+                pogoMovesCache = await pogoRes.json();
+            }
+            let pogoData = pogoMovesCache.find(p => p.pokemon_name.toLowerCase() === data.name.toLowerCase() && p.form === "Normal");
+            if (!pogoData) pogoData = pogoMovesCache.find(p => p.pokemon_name.toLowerCase() === data.name.toLowerCase());
+            
+            if (pogoData) {
+                if (!fastMove) {
+                    const fMoves = [...pogoData.fast_moves, ...pogoData.elite_fast_moves];
+                    if (fMoves.length > 0) fastMove = fMoves[0].toLowerCase();
+                }
+                if (!chargeMove) {
+                    const cMoves = [...pogoData.charged_moves, ...pogoData.elite_charged_moves];
+                    if (cMoves.length > 0) chargeMove = cMoves[0].toLowerCase();
+                }
+            }
+        }
         
         const pokemon = {
             uid: Date.now().toString() + Math.random().toString().slice(2, 6),
@@ -841,8 +862,6 @@ function getCounterType(type) {
 }
 
 // --- Moveset Modal Logic ---
-let pogoMovesCache = null;
-
 closeModalBtn.addEventListener('click', () => {
     movesetModal.classList.add('hidden');
 });
