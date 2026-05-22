@@ -328,6 +328,57 @@ async function init() {
     renderTypeLegend();
     renderSavedTeams();
     await fetchPokemonNames();
+    
+    // Migrate empty moves for older saved pokemon
+    let needsMoveMigration = false;
+    for (const p of state.collection) {
+        if (!p.fastMove || !p.chargeMove) {
+            if (!pogoMovesCache) {
+                const res = await fetch('https://pogoapi.net/api/v1/current_pokemon_moves.json');
+                pogoMovesCache = await res.json();
+            }
+            let pogoData = pogoMovesCache.find(x => x.pokemon_name.toLowerCase() === p.name.toLowerCase() && x.form === "Normal");
+            if (!pogoData) pogoData = pogoMovesCache.find(x => x.pokemon_name.toLowerCase() === p.name.toLowerCase());
+            
+            if (pogoData) {
+                if (!p.fastMove) {
+                    const fMoves = [...pogoData.fast_moves, ...pogoData.elite_fast_moves];
+                    if (fMoves.length > 0) p.fastMove = fMoves[0].toLowerCase();
+                }
+                if (!p.chargeMove) {
+                    const cMoves = [...pogoData.charged_moves, ...pogoData.elite_charged_moves];
+                    if (cMoves.length > 0) p.chargeMove = cMoves[0].toLowerCase();
+                }
+                needsMoveMigration = true;
+            }
+        }
+    }
+    
+    if (needsMoveMigration) {
+        saveCollection();
+        state.team.forEach(tp => {
+            if (tp && (!tp.fastMove || !tp.chargeMove)) {
+                const updated = state.collection.find(c => c.uid === tp.uid);
+                if (updated) {
+                    tp.fastMove = updated.fastMove;
+                    tp.chargeMove = updated.chargeMove;
+                }
+            }
+        });
+        state.savedTeams.forEach(team => {
+            team.pokemon.forEach(tp => {
+                if (tp && (!tp.fastMove || !tp.chargeMove)) {
+                    const updated = state.collection.find(c => c.uid === tp.uid);
+                    if (updated) {
+                        tp.fastMove = updated.fastMove;
+                        tp.chargeMove = updated.chargeMove;
+                    }
+                }
+            });
+        });
+        localStorage.setItem('savedTeams', JSON.stringify(state.savedTeams));
+    }
+
     renderCollection();
     renderTeam();
 }
